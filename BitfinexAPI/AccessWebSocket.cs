@@ -9,24 +9,39 @@ using WebSocketSharp;
 
 namespace BitfinexAPI
 {
+    
     static class AccessWebSocket
     {
         const string endpointBase = "wss://api.bitfinex.com/ws";
 
-        static Dictionary<string, WebSocket> _socketPool;
+        public static Dictionary<string, WebSocket> _socketPool;
+        public static Dictionary<string, Queue<string>> _bufferPool;
+        public static Dictionary<string, object> _snapShotPool;
 
         static AccessWebSocket()
         {
             _socketPool = new Dictionary<string, WebSocket>();
+            _bufferPool = new Dictionary<string, Queue<string>>();
+            _snapShotPool = new Dictionary<string, object>();
         }
 
-        public static string Subscribe<T>(string args, Action<T> handler)
+        public static string Subscribe<T>(string args, string _chanId)
         {
             WebSocket ws = new WebSocket(endpointBase + args);
+            string chanId = _chanId;
+            ws.SetProxy("http://localhost:1080", null, null);
+            ws.OnOpen += (sender, message) =>
+             {
+                 Console.WriteLine("Connect Success!!");
+                 _socketPool.Add(chanId, ws);
+                 _bufferPool.Add(chanId,new Queue<string>());
+                 _snapShotPool.Add(chanId, new object());
+
+             };
 
             ws.OnMessage += (sender, message) =>
             {
-                //handler();
+                _bufferPool[chanId].Enqueue(message.Data);
             };
 
             ws.OnError += (sender, error) =>
@@ -37,9 +52,6 @@ namespace BitfinexAPI
             ws.Connect();
             ws.Send(args);
 
-            string chanId = "";
-            _socketPool.Add(chanId, ws);
-
             return chanId;
         }
 
@@ -49,4 +61,5 @@ namespace BitfinexAPI
             _socketPool.Remove(chanId);
         }
     }
+    
 }

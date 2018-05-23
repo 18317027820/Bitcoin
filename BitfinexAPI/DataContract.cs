@@ -23,20 +23,59 @@ namespace BitfinexAPI
         public DateTime timestamp;
     }
 
+    [JsonConverter(typeof(PairInfoConverter))]
     public class PairInfo
     {
         public decimal price;
         public decimal amount;
-        [JsonConverter(typeof(V1TimeConverter))]
         public DateTime timestamp;
     }
 
+    [JsonConverter(typeof(OrderBookConverter))]
     public class OrderBookInfo
     {
-        public List<PairInfo> asks;
+        public List<PairInfo> asks;  //Positive values mean bid, negative values mean ask.
         public List<PairInfo> bids;
+        public void Update(PairInfo pairInfo)
+        {
+            int i = 0;
+            if (pairInfo.amount < 0)
+            {
+                foreach (PairInfo temp in asks)
+                {
+                    if (pairInfo.price < temp.price)
+                    {
+                        break;
+                    }
+                    i++;
+                }
+                if (i < asks.Count)
+                {
+                    asks.Insert(i, pairInfo);
+                    asks.RemoveAt(asks.Count - 1);
+                }
+            }
+            else
+            {
+                foreach (PairInfo temp in bids)
+                {
+                    if (pairInfo.price > temp.price)
+                    {
+                        break;
+                    }
+                    i++;
+                }
+
+                if (i < bids.Count)
+                {
+                    bids.Insert(i, pairInfo);
+                    bids.RemoveAt(asks.Count - 1);
+                }
+            }
+        }
     }
 
+    
     public class TradeInfo : PairInfo
     {
         [JsonConverter(typeof(StringEnumConverter))]
@@ -44,6 +83,7 @@ namespace BitfinexAPI
         public long tid;
         public string exchange;
     }
+    
 
     public class TransactionInfo : TradeInfo
     {
@@ -51,7 +91,7 @@ namespace BitfinexAPI
         public decimal fee_amount;
         public long order_id;
     }
-
+    
     public class OrderInfo
     {
         public long id;

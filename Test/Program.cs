@@ -5,11 +5,12 @@ using System.Net.Http;
 
 using BitfinexAPI;
 using BinanceAPI;
-
+using System.Threading;
+using System.Threading.Tasks;
 using WebSocketSharp;
 using Newtonsoft.Json;
 
-namespace Test
+namespace BitfinexAPI
 {
     class Program
     {
@@ -17,39 +18,18 @@ namespace Test
         {
             string apiKey = ConfigurationManager.AppSettings["ApiKey"];
             string secretKey = ConfigurationManager.AppSettings["SecretKey"];
-
-            //BitfinexMethod bm = new BitfinexMethod(apiKey, secretKey);
-
-            WebSocket ws = new WebSocket("wss://api.bitfinex.com/ws/");
-            ws.SetProxy("http://localhost:1080", null, null);
-
-            ws.OnMessage += (o, e) =>
+            OrderBookInfo BTC = new OrderBookInfo();
+            BitfinexMethod method = new BitfinexMethod("","");
+            BTC = method.GetSnapShot_OrderBook("tBTCUSD", "tBTCUSD");
+            method.InstantUpdate_OrderBook("tBTCUSD");
+            //Main thread to update the info at a constant frequncy
+            while (true)
             {
-                Console.WriteLine(e.Data);
-            };
+                Thread.Sleep(1000);
+                Console.WriteLine("The current price of BTC is " + BTC.asks[0].price);
+            }
 
-            ws.Connect();
-            Console.ReadKey();
-
-            BaseInfo req = new BaseInfo();
-            req.Add("event", "subscribe");
-            req.Add("channel", "trades");
-            req.Add("pair", "BTCUSD");
-
-            ws.Send(JsonConvert.SerializeObject(req));
-
-            Console.ReadKey();
-
-            BaseInfo req2 = new BaseInfo();
-            req2.Add("event", "subscribe");
-            req2.Add("channel", "book");
-            req2.Add("pair", "BTCUSD");
-            req2.Add("prec", "P2");
-
-            ws.Send(JsonConvert.SerializeObject(req2));
-
-            Console.ReadKey();
-            ws.Close();
         }
+
     }
 }

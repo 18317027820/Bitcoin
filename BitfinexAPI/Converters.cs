@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -70,7 +70,7 @@ namespace BitfinexAPI
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var o = JArray.Load(reader);
+            var o = JArray.Load(reader); 
 
             return new TradeRecordInfo()
             {
@@ -86,4 +86,75 @@ namespace BitfinexAPI
             throw new NotImplementedException();
         }
     }
+
+    class PairInfoConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var o = JArray.Load(reader);
+            if (o.Count == 3)
+            {
+                return new PairInfo()
+                {
+                    amount = Convert.ToDecimal(o[2]),
+                    price = Convert.ToDecimal(o[0]),
+                    timestamp = DateTime.Now
+                };
+            }
+            else
+            {
+                return new PairInfo()
+                {
+                    amount = Convert.ToDecimal(o[3]),
+                    price = Convert.ToDecimal(o[1]),
+                    timestamp = DateTime.Now
+                };
+            }
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    class OrderBookConverter: JsonConverter
+        {
+        public override bool CanConvert(Type objectType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var o = JArray.Load(reader);
+            string tempPairInfos = o[1].ToString();
+            List<PairInfo> pairInfos = JsonConvert.DeserializeObject<List<PairInfo>>(tempPairInfos);
+            List<PairInfo> _asks = new List<PairInfo>();
+            List<PairInfo> _bids = new List<PairInfo>();
+            foreach (PairInfo pairInfo in pairInfos)
+            {
+                if (pairInfo.amount >= 0)
+                    _bids.Add(pairInfo);
+                else
+                    _asks.Add(pairInfo);     
+            }
+            return new OrderBookInfo()
+            {
+                asks = _asks,
+                bids = _bids
+            };
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+        }
 }
+
+

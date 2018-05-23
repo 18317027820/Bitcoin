@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace BitfinexAPI
 {
@@ -188,5 +189,44 @@ namespace BitfinexAPI
 
             return await ProcessPublic<List<TradeRecordInfo>>(path);
         }
+
+        T GetSnapShot<T> (string args, string chanId)
+        {
+            string id = AccessWebSocket.Subscribe<T>(args,chanId);
+            int messageNum = 0;
+            Queue<string> buffer = AccessWebSocket._bufferPool[id];
+            while (messageNum < 2)
+            { 
+                while (buffer.Count == 0) ;
+                buffer.Dequeue();
+                messageNum++;
+            }
+            while (buffer.Count == 0) ;
+            return JsonConvert.DeserializeObject<T>(buffer.Dequeue());
+        }
+
+        public OrderBookInfo GetSnapShot_OrderBook(string symbol,string id)
+        {
+            Dictionary<string, string> args = new Dictionary<string, string>();
+            args.Add("event","subscribe");
+            args.Add("channel","book");
+            args.Add("symbol",symbol);
+            args.Add("prec","P0");
+            args.Add("freq", "F0");
+            args.Add("len","25");
+            string request = JsonConvert.SerializeObject(args);
+            OrderBookInfo res = GetSnapShot<OrderBookInfo>(request, symbol);
+            AccessWebSocket._snapShotPool[id] = res;
+            return res;
+        }
+
+        async public void InstantUpdate_OrderBook(string id)
+        {
+            Queue<string> buffer = AccessWebSocket._bufferPool[id];
+            OrderBookInfo snapShot = (OrderBookInfo)AccessWebSocket._snapShotPool[id];
+            Task tsk = new Task(() => { while (buffer.Count == 0) ; snapShot.Update(JsonConvert.DeserializeObject<PairInfo>(buffer.Dequeue())); });
+            await tsk;
+        }
+
     }
 }
