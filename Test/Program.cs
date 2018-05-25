@@ -16,6 +16,7 @@ namespace BitfinexAPI
     {
         static void Main(string[] args)
         {
+            /*
             string apiKey = ConfigurationManager.AppSettings["ApiKey"];
             string secretKey = ConfigurationManager.AppSettings["SecretKey"];
             OrderBookInfo BTC = new OrderBookInfo();
@@ -28,7 +29,11 @@ namespace BitfinexAPI
                 Thread.Sleep(1000);
                 Console.WriteLine("The current price of BTC is " + BTC.asks[0].price);
             }
-
+            */
+            string tradeInfo = "[75, \"tu\",  [249930637, 1527253236365, -0.6448805, 7501.3]]";
+            TradeRecordInfo info = JsonConvert.DeserializeObject<TradeRecordInfo>(tradeInfo);
+            Console.WriteLine(string.Format("The price is {0}, the amount is {1}, the id is {2}, the date is {3}",info.price,info.amount,info.id,info.timestamp));
+            Console.ReadKey();
         }
 
     }

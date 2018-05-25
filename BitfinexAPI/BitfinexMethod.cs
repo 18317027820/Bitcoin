@@ -228,5 +228,28 @@ namespace BitfinexAPI
             await tsk;
         }
 
+
+        public TradeRecordInfo GetSnapShot_TradeInfo(string symbol, string id)
+        {
+            Dictionary<string, string> args = new Dictionary<string, string>();
+            args.Add("event", "subscribe");
+            args.Add("channel", "trades");
+            args.Add("symbol", symbol);
+
+            string request = JsonConvert.SerializeObject(args);
+            TradeRecordInfo res = GetSnapShot<TradeRecordInfo>(request, symbol);
+            AccessWebSocket._snapShotPool[id] = res;
+            return res;
+        }
+
+        async public void InstantUpdate_TradeInfo(string id)
+        {
+            Queue<string> buffer = AccessWebSocket._bufferPool[id];
+            TradeRecordInfo snapShot = (TradeRecordInfo)AccessWebSocket._snapShotPool[id];
+            Task tsk = new Task(() => { while (buffer.Count == 0) ; snapShot = JsonConvert.DeserializeObject<TradeRecordInfo>(buffer.Dequeue()); });
+            await tsk;
+        }
+
+
     }
 }

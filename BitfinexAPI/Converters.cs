@@ -70,15 +70,33 @@ namespace BitfinexAPI
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var o = JArray.Load(reader); 
+            var o = JArray.Load(reader);
+            // The first two condtions deal with the scenerio occrued in websocket
+            if (o[1] is JArray)
+                return new TradeRecordInfo()
+                {
+                    id = Convert.ToInt64(o[1][0][0]),
+                    timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(o[1][0][1])).DateTime,
+                    amount = Convert.ToDecimal(o[1][0][2]),
+                    price = Convert.ToDecimal(o[1][0][3]),
+                };
+            else if (Convert.ToString(o[1]) == "tu")
+                return new TradeRecordInfo()
+                {
+                    id = Convert.ToInt64(o[2][0]),
+                    timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(o[2][1])).DateTime,
+                    amount = Convert.ToDecimal(o[2][2]),
+                    price = Convert.ToDecimal(o[2][3]),
+                };
+            else
+                return new TradeRecordInfo()
+                {
+                    id = Convert.ToInt64(o[0]),
+                    timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(o[1])).DateTime,
+                    amount = Convert.ToDecimal(o[2]),
+                    price = Convert.ToDecimal(o[3]),
+                };
 
-            return new TradeRecordInfo()
-            {
-                id = Convert.ToInt64(o[0]),
-                timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(o[1])).DateTime,
-                amount = Convert.ToDecimal(o[2]),
-                price = Convert.ToDecimal(o[3]),
-            };
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
