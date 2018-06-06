@@ -286,5 +286,4 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
-/Portal/App.config
-/Test/App.config
+*.config
