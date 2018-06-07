@@ -83,15 +83,15 @@ namespace MannualTool
             writer.WriteLine("timestamp,open,close,high,low,volume");
 
             var point = timestamp;
-            while (point < DateTime.Now.Date)
+            while (point < DateTime.Now)
             {
                 var next = point + new TimeSpan(30, 0, 0, 0);
-                if (next > DateTime.Now) next = DateTime.Now;
 
-                var data = _bm.GetHistoryKlines(symbol, KlineInterval.OneHour, point, next).Result;
+                var data = _bm.GetHistoryKlines(symbol, KlineInterval.OneHour,
+                    point, (next < DateTime.Now) ? next : DateTime.Now).Result;
 
                 foreach (var i in data)
-                    writer.WriteLine(i.timestamp + ","
+                    writer.WriteLine(i.timestamp.ToLocalTime() + ","
                         + i.open + ","
                         + i.close + ","
                         + i.high + ","
