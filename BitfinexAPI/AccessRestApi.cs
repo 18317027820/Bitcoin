@@ -11,7 +11,6 @@ namespace BitfinexAPI
     static class AccessRestApi
     {
         const string endpointBase = "https://api.bitfinex.com";
-        static HttpClient _httpClient = new HttpClient();
 
         public static async Task<T> InvokeHttpCall<T>(string path)
         {
@@ -39,7 +38,7 @@ namespace BitfinexAPI
                 req.Headers.Add("X-BFX-SIGNATURE", signature);
             }
 
-            var res = await _httpClient.SendAsync(req);
+            var res = await (new HttpClient()).SendAsync(req);
 
             string data = await res.Content.ReadAsStringAsync();
 
